@@ -1,3 +1,5 @@
+# A simple python module implementing SDE solvers
+
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
@@ -11,6 +13,7 @@ def euler_maruyama(drift, diffusion, x_0, T, N = 100):
     Returns the computed path
     """
     del_t = T/float(N)
+    root_t = np.sqrt(del_t)
     # figure out dimension of the problem
     if not np.isscalar(x_0):
         dimension = len(x_0)
@@ -23,7 +26,7 @@ def euler_maruyama(drift, diffusion, x_0, T, N = 100):
     # initialize and recurse
     Y[0] = x_0
     for i in range(1, N+1):
-        Y[i] = Y[i-1] + a(Y[i-1])*del_t + mult(b(Y[i-1]), np.random.normal(0.0, np.sqrt(del_t), size = dimension))
+        Y[i] = Y[i-1] + drift(Y[i-1])*del_t + mult(diffusion(Y[i-1]), np.random.normal(0.0, root_t, size = dimension))
     return Y
 
 class SDE(object):
@@ -39,7 +42,7 @@ class SDE(object):
         else:
             self.dim = 1
 
-    def solve(self, method, T, N = 100):
+    def solve(self, method, T, N = 1000):
         """
         Numerically solves sde in [0, T] using the preferred method
         N = number of subintervals of [0, T] used during computation
@@ -48,22 +51,47 @@ class SDE(object):
             self.Y = euler_maruyama(self.drift, self.diffusion, self.x_0, T, N)
         self.T = T
 
-    def draw_path(self):
+    def expected_path(self, num_paths = 1000, method, T, N = 1000):
+        for i in range(num_paths):
+            self.
+
+    def draw_path_1(self):
+        """
+        Draws the generated path (against time) for 1-dimensional problems
+        """
         x = np.linspace(0.0, self.T, len(self.Y), endpoint = True)
         plt.plot(x, self.Y)
         plt.show()
 
-    def draw_path_3(self):
+    def draw_path_3(self, max_pts = 100):
+        """
+        Draws the generated trajectory for 3-dimensional problems
+        """
         fig = plt.figure()
         ax = plt.axes(projection='3d')
-        x, y, z = self.Y[:, 0], self.Y[:, 1], self.Y[:, 2]
+        pts = len(self.Y[:, 0])
+        # select points to plot
+        if pts > max_pts:
+            increment = int(pts/max_pts)
+            x, y, z = np.zeros(max_pts), np.zeros(max_pts), np.zeros(max_pts)
+            j = 0
+            for i in range(max_pts):
+                x[i] = self.Y[j, 0]
+                y[i] = self.Y[j, 1]
+                z[i] = self.Y[j, 2]
+                j += increment
+        else:
+            x, y, z = self.Y[:, 0], self.Y[:, 1], self.Y[:, 2]
         ax.plot3D(x,y,z)
         plt.show()
 
+"""
+# For testing .....
 if __name__ == '__main__':
     a = lambda x: 0.5*x
     b = lambda x: x
     x_0 = 1.0
     sde = SDE(a, b, x_0)
-    sde.solve(method = 'euler_maruyama', T = 10, N=5200)
-    sde.draw_path()
+    sde.solve(method = 'euler_maruyama', T = 10, N=100200)
+    sde.draw_path_1()
+"""
